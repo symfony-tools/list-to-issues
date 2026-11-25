@@ -87,6 +87,7 @@ real permission of the commenter. Anybody else gets a 👎 and nothing happens.
 | `/attachments` | Answers with download links for the raw messages and the attachments that aren't shown. |
 | `/close` | Closes the issue and removes the labels that say somebody waits. The later messages of the thread are still mirrored. |
 | `/spam` | Closes the issue as not planned, labels it, and ignores the later messages of the thread. |
+| `/bounty` | Emails the configured answer to a request for a bug bounty, then closes the issue like `/close`. Text below the command is added after it. |
 
 The Worker reacts to the command comment with 🚀 once an email is sent, and with 👍 for the
 other commands. When it can't do what you asked, it reacts with 😕 and explains why.
@@ -101,6 +102,11 @@ sends the draft. A comment is sent once. A second `/send` of the same comment is
 ask the questions that every reporter gets. It only works while nothing was sent in the thread.
 The Worker then posts a comment with the text that it sent. It is a command on purpose, since an
 automatic reply would also answer spam.
+
+`/bounty` sends the text of `BOUNTY_TEMPLATE`, for the messages that only ask whether there is
+a bug bounty program. The Worker posts the text that it sent, then closes the issue and removes
+its status labels, and adds `LABEL_BOUNTY` when it is set. Unlike `/spam`, the later messages of
+the thread are still mirrored, in case the sender follows up with a real report.
 
 ### What the reporter receives
 
@@ -210,7 +216,7 @@ contain the name and the address of the reporter and of the people they copied.
   removed when an email is sent. Set a label to an empty string to disable its status.
 - `LABEL_ANSWER_OWED` is for teams that owe a final answer to every reporter. The Worker puts
   it on every new report and never removes it when an email is sent. A person removes it once the
-  final answer is sent, or `/close` and `/spam` do.
+  final answer is sent, or `/close`, `/spam` and `/bounty` do.
 - The labels stay on a closed issue. A search on them lists every reporter who still waits for
   an answer, for example after their report was closed as a duplicate.
 - `/close` is for threads that need nothing more, like a message that wasn't a report. Closing
@@ -261,9 +267,11 @@ Settings are plain variables in the Wrangler configuration.
 | `LABEL_TO_ACKNOWLEDGE`, `LABEL_AWAITING_REPORTER` | | The other statuses of a report, see Labels |
 | `LABEL_ANSWER_OWED` | | Put on every new report until somebody ends the thread, see Labels |
 | `LABEL_SPAM`, `LABEL_UNTHREADED` | `spam`, `unthreaded` | |
+| `LABEL_BOUNTY` | | Label that `/bounty` adds. Empty for none |
 | `REOPEN_ON_REPORTER_MESSAGE` | `true` | |
 | `ISSUE_TYPE` | | Issue type of new issues. The type must exist in the organization |
 | `ACK_TEMPLATE` | | Text that `/ack` sends, with `{commenter}` and `{label}` |
+| `BOUNTY_TEMPLATE` | | Text that `/bounty` sends, with `{commenter}` and `{label}` |
 | `ATTACHMENT_MAX_BYTES` | `262144` | Above this size, an attachment is listed instead of shown |
 | `DOWNLOAD_LINK_TTL_SECONDS` | `900` | |
 | `PUBLIC_BASE_URL` | | Base of download links. Defaults to the origin of the webhook URL |

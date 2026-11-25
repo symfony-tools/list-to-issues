@@ -46,10 +46,12 @@ export interface Config {
 	labelToAcknowledge: string;
 	labelAwaitingReporter: string;
 	labelSpam: string;
+	labelBounty: string;
 	labelUnthreaded: string;
 	reopenOnReporterMessage: boolean;
 	issueType: string;
 	ackTemplate: string;
+	bountyTemplate: string;
 
 	attachmentMaxBytes: number;
 	downloadLinkTtl: number;
@@ -220,10 +222,12 @@ export function loadConfig(env: Env): Config {
 		labelToAcknowledge: optional(env.LABEL_TO_ACKNOWLEDGE, ""),
 		labelAwaitingReporter: optional(env.LABEL_AWAITING_REPORTER, ""),
 		labelSpam: optional(env.LABEL_SPAM, "spam") || "spam",
+		labelBounty: optional(env.LABEL_BOUNTY, ""),
 		labelUnthreaded: optional(env.LABEL_UNTHREADED, "unthreaded") || "unthreaded",
 		reopenOnReporterMessage: bool(env.REOPEN_ON_REPORTER_MESSAGE, true),
 		issueType: optional(env.ISSUE_TYPE, ""),
 		ackTemplate: optional(env.ACK_TEMPLATE, ""),
+		bountyTemplate: optional(env.BOUNTY_TEMPLATE, ""),
 
 		attachmentMaxBytes: integer("ATTACHMENT_MAX_BYTES", env.ATTACHMENT_MAX_BYTES, 262144),
 		downloadLinkTtl: integer("DOWNLOAD_LINK_TTL_SECONDS", env.DOWNLOAD_LINK_TTL_SECONDS, 900) || 900,

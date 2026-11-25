@@ -114,6 +114,7 @@ describe("commands", () => {
 		expect(parseCommand("/replying to you", "/")).toBeNull();
 		expect(parseCommand("/ack", "/")).toEqual({ name: "ack", args: "", rest: "" });
 		expect(parseCommand("/close", "/")).toEqual({ name: "close", args: "", rest: "" });
+		expect(parseCommand("/bounty\nThanks", "/")).toEqual({ name: "bounty", args: "", rest: "Thanks" });
 		expect(parseCommand("/unknown", "/")).toBeNull();
 		expect(parseCommand("", "/")).toBeNull();
 	});

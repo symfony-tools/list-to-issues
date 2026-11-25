@@ -40,10 +40,12 @@ export interface Env {
 	LABEL_TO_ACKNOWLEDGE?: string;
 	LABEL_AWAITING_REPORTER?: string;
 	LABEL_SPAM?: string;
+	LABEL_BOUNTY?: string;
 	LABEL_UNTHREADED?: string;
 	REOPEN_ON_REPORTER_MESSAGE?: string;
 	ISSUE_TYPE?: string;
 	ACK_TEMPLATE?: string;
+	BOUNTY_TEMPLATE?: string;
 
 	ATTACHMENT_MAX_BYTES?: string;
 	DOWNLOAD_LINK_TTL_SECONDS?: string;

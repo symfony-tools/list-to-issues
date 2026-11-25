@@ -214,6 +214,30 @@ async function markSpam(command: GitHubComment, thread: Thread, app: App): Promi
 	return ACK;
 }
 
+// Answers a request for a bug bounty with the configured text, then ends the thread like
+// "/close": the later messages are still mirrored, in case a real report follows.
+async function answerBounty(command: GitHubComment, rest: string, thread: Thread, attempts: number, app: App): Promise<JobResult> {
+	const { cfg, github, store } = app;
+	if ("" === cfg.bountyTemplate) {
+		return refuse(command, "no bug bounty template is configured.", app);
+	}
+	const text = [fill(cfg.bountyTemplate, command.login, cfg).trim(), rest].filter((part) => "" !== part).join("\n\n");
+	const result = await send(command, command.id, text, false, thread, attempts, app, true);
+	if ("done" !== (await store.getOutbound(command.id))?.status) {
+		return result;
+	}
+
+	await store.setClosed(thread.issueNumber, app.now().toISOString());
+	await clearReportLabels(thread.issueNumber, app);
+	if ("" !== cfg.labelBounty) {
+		await github.ensureLabel(cfg.labelBounty);
+		await github.addLabels(thread.issueNumber, [cfg.labelBounty]);
+	}
+	await github.setIssueState(thread.issueNumber, "closed", "completed");
+
+	return result;
+}
+
 // Ends a thread that needs nothing more: closed, and no label says that somebody waits.
 // Unlike with "/spam", its later messages are still mirrored.
 async function closeThread(command: GitHubComment, thread: Thread, app: App): Promise<JobResult> {
@@ -271,6 +295,10 @@ export async function processOutbound(job: OutboundJob, attempts: number, app: A
 			return thread.spam
 				? refuse(comment, "this thread is flagged as spam.", app)
 				: acknowledge(comment, command.rest, thread, attempts, app);
+		case "bounty":
+			return thread.spam
+				? refuse(comment, "this thread is flagged as spam.", app)
+				: answerBounty(comment, command.rest, thread, attempts, app);
 		case "reporter":
 			return setReporter(comment, command.args, thread, app);
 		case "attachments":

@@ -438,6 +438,75 @@ describe("/close", () => {
 	});
 });
 
+describe("/bounty", () => {
+	const template = { BOUNTY_TEMPLATE: "Hello,\n\nWe don't pay rewards.\n\n{commenter}, for {label}", LABEL_ANSWER_OWED: "answer-owed" };
+
+	it("sends the configured answer and closes the thread without silencing it", async () => {
+		const app = makeApp({ ...template, LABEL_BOUNTY: "bounty" });
+		await thread(app);
+		const id = await comment(app, 1, "/bounty");
+
+		const mail = app.mailer.last();
+		expect(mail.to.address).toBe(REPORTER);
+		expect(mail.headers["In-Reply-To"]).toBe("<root@example.org>");
+		expect(mail.text.startsWith("Hello,\n\nWe don't pay rewards.\n\nmaintainer, for Example List")).toBe(true);
+		expect(app.github.comments.get(id)!.reactions).toEqual(["rocket"]);
+		expect(app.github.commentsOf(1).at(-1)!.body).toBe("Sent to the reporter:\n\n> Hello,\n>\n> We don't pay rewards.\n>\n> maintainer, for Example List");
+
+		const issue = app.github.issue(1);
+		expect(issue.state).toBe("closed");
+		expect(issue.reason).toBe("completed");
+		expect([...issue.labels]).toEqual(["via-email", "bounty"]);
+		expect((await app.store.getThread(1))?.spam).toBe(false);
+
+		// A real report may follow: it is mirrored, and the issue comes back
+		await receive(app, { messageId: "later@example.org", inReplyTo: "root@example.org", text: "Here is a finding." });
+		expect(app.github.commentsOf(1).some((c) => c.body.includes("Here is a finding."))).toBe(true);
+		expect(issue.state).toBe("open");
+	});
+
+	it("adds the text written below the command", async () => {
+		const app = makeApp(template);
+		await thread(app);
+		await comment(app, 1, "/bounty\nThanks for your interest.");
+
+		expect(app.mailer.last().text).toContain("maintainer, for Example List\n\nThanks for your interest.");
+		expect([...app.github.issue(1).labels]).toEqual(["via-email"]);
+	});
+
+	it("sends once when the job is delivered twice", async () => {
+		const app = makeApp(template);
+		await thread(app);
+		const id = await comment(app, 1, "/bounty");
+		app.outbound.push({ type: "comment", issue: 1, commentId: id, origin: "https://worker.example.com" });
+		await drainOutbound(app);
+
+		expect(app.mailer.sent).toHaveLength(1);
+	});
+
+	it("keeps the thread open when the email is refused", async () => {
+		const app = makeApp(template);
+		await thread(app);
+		app.mailer.failNext(new MailError("E_RECIPIENT_SUPPRESSED", false));
+		const id = await comment(app, 1, "/bounty");
+
+		expect(app.github.comments.get(id)!.reactions).toEqual(["confused"]);
+		expect(app.github.issue(1).state).toBe("open");
+		expect([...app.github.issue(1).labels]).toEqual(["via-email", "needs-reply", "answer-owed"]);
+	});
+
+	it("needs a template", async () => {
+		const app = makeApp();
+		await thread(app);
+		const id = await comment(app, 1, "/bounty");
+
+		expect(app.mailer.sent).toHaveLength(0);
+		expect(app.github.comments.get(id)!.reactions).toEqual(["confused"]);
+		expect(app.github.commentsOf(1).at(-1)!.body).toContain("no bug bounty template is configured");
+		expect(app.github.issue(1).state).toBe("open");
+	});
+});
+
 describe("/spam", () => {
 	it("closes, labels and silences the thread", async () => {
 		const app = makeApp({ LABEL_ANSWER_OWED: "answer-owed" });

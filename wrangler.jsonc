@@ -81,15 +81,19 @@
 		"LABEL_TO_ACKNOWLEDGE": "",
 		"LABEL_AWAITING_REPLY": "needs-reply",
 		"LABEL_AWAITING_REPORTER": "",
-		// Put on every new report, and only removed by "/close", "/spam" or a person
+		// Put on every new report, and only removed by "/close", "/spam", "/bounty" or a person
 		"LABEL_ANSWER_OWED": "",
 		"LABEL_SPAM": "spam",
+		// Put by "/bounty", empty for none
+		"LABEL_BOUNTY": "",
 		"LABEL_UNTHREADED": "unthreaded",
 		"REOPEN_ON_REPORTER_MESSAGE": "true",
 		// Name of an issue type of the organization, for new issues
 		"ISSUE_TYPE": "",
 		// Text that "/ack" sends, with {commenter} and {label}
 		"ACK_TEMPLATE": "",
+		// Text that "/bounty" sends, with {commenter} and {label}
+		"BOUNTY_TEMPLATE": "",
 
 		"ATTACHMENT_MAX_BYTES": "262144",
 		"DOWNLOAD_LINK_TTL_SECONDS": "900",
